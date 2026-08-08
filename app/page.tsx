@@ -12,6 +12,7 @@ export default function Home() {
     fileName: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,10 +70,18 @@ export default function Home() {
     }
   };
 
+  const handleCopy = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(result.text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const reset = () => {
     setFile(null);
     setResult(null);
     setError(null);
+    setCopied(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -95,7 +104,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-lg mx-auto px-4 py-6 sm:py-8 space-y-6">
         {/* Upload Area */}
         {!result && (
           <div
@@ -228,25 +237,33 @@ export default function Home() {
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                 <h2 className="font-medium text-sm">Extracted Text</h2>
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(result.text);
-                    alert("Copied to clipboard");
-                  }}
+                  onClick={handleCopy}
                   className="text-xs font-medium text-blue-600 active:opacity-70"
                 >
-                  Copy
+                  {copied ? "Copied!" : "Copy"}
                 </button>
               </div>
 
               <div className="p-4 max-h-[60vh] overflow-y-auto">
-                <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
-                  {result.text || "No text found in this PDF."}
-                </p>
+                {result.text ? (
+                  <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
+                    {result.text}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">
+                    No extractable text found in this PDF.
+                  </p>
+                )}
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <footer className="text-center text-xs text-gray-400 py-8">
+        Built with Next.js + Tailwind
+      </footer>
     </main>
   );
-} 
+}
