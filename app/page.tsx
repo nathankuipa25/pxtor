@@ -14,6 +14,12 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // AI states
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [question, setQuestion] = useState("");
+  const [showQuestionInput, setShowQuestionInput] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (selectedFile: File | null) => {
@@ -27,6 +33,8 @@ export default function Home() {
     setFile(selectedFile);
     setError(null);
     setResult(null);
+    setAiAnswer(null);
+    setShowQuestionInput(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -42,6 +50,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setAiAnswer(null);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -77,11 +86,46 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const callAI = async (type: "summarize" | "question") => {
+    if (!result) return;
+
+    setAiLoading(true);
+    setAiAnswer(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: result.text,
+          type,
+          question: type === "question" ? question : undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "AI request failed");
+      }
+
+      setAiAnswer(data.answer);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "AI request failed");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const reset = () => {
     setFile(null);
     setResult(null);
     setError(null);
     setCopied(false);
+    setAiAnswer(null);
+    setQuestion("");
+    setShowQuestionInput(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -92,7 +136,7 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-semibold tracking-tight">PXtor.io</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Pxtor</h1>
           {result && (
             <button
               onClick={reset}
@@ -233,6 +277,56 @@ export default function Home() {
               </div>
             </div>
 
+            {/* AI Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => callAI("summarize")}
+                disabled={aiLoading}
+                className="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl active:scale-[0.98] transition-transform disabled:opacity-60"
+              >
+                {aiLoading ? "Thinking..." : "Summarize"}
+              </button>
+              <button
+                onClick={() => setShowQuestionInput(!showQuestionInput)}
+                className="flex-1 py-2.5 bg-white border border-gray-300 text-gray-800 text-sm font-medium rounded-xl active:scale-[0.98] transition-transform"
+              >
+                Ask Question
+              </button>
+            </div>
+
+            {/* Question Input */}
+            {showQuestionInput && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">
+                <input
+                  type="text"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder="Ask anything about this PDF..."
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={() => callAI("question")}
+                  disabled={aiLoading || !question.trim()}
+                  className="w-full py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl disabled:opacity-50"
+                >
+                  {aiLoading ? "Thinking..." : "Get Answer"}
+                </button>
+              </div>
+            )}
+
+            {/* AI Answer */}
+            {aiAnswer && (
+              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
+                <h3 className="text-sm font-semibold text-indigo-900 mb-2">
+                  AI Response
+                </h3>
+                <p className="text-sm text-indigo-900 leading-relaxed whitespace-pre-wrap">
+                  {aiAnswer}
+                </p>
+              </div>
+            )}
+
+            {/* Extracted Text */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                 <h2 className="font-medium text-sm">Extracted Text</h2>
@@ -244,7 +338,7 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="p-4 max-h-[60vh] overflow-y-auto">
+              <div className="p-4 max-h-[50vh] overflow-y-auto">
                 {result.text ? (
                   <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
                     {result.text}
@@ -260,9 +354,8 @@ export default function Home() {
         )}
       </div>
 
-      {/* Footer */}
       <footer className="text-center text-xs text-gray-400 py-8">
-        Built with Next.js + Tailwind
+        Built with Next.js + Tailwind + Groq
       </footer>
     </main>
   );
