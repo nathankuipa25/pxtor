@@ -355,7 +355,7 @@ export default function Home() {
         )}
       </div>
 
-      <footer className="border-t border-gray-200 bg-white mt-10">
+      <footer className="border-t border-gray-200  mt-10">
   <div className="max-w-lg mx-auto px-4 py-6 text-center">
     <p className="text-sm text-gray-500">
       © {new Date().getFullYear()} Nattix Technologies
