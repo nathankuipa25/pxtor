@@ -21,22 +21,43 @@ export async function POST(request: NextRequest) {
 
     let prompt = "";
 
-    if (type === "summarize") {
-      prompt = `You are a helpful assistant. Summarize the following document clearly and concisely in plain language. Use bullet points if helpful.\n\nDocument:\n${truncatedText}`;
-    } else if (type === "question") {
-      if (!question) {
-        return NextResponse.json(
-          { error: "Question is required" },
-          { status: 400 }
-        );
-      }
-      prompt = `You are a helpful assistant. Answer the user's question based only on the document below. If the answer is not in the document, say so.\n\nDocument:\n${truncatedText}\n\nQuestion: ${question}`;
-    } else {
-      return NextResponse.json(
-        { error: "Invalid type. Use 'summarize' or 'question'" },
-        { status: 400 }
-      );
-    }
+if (type === "summarize") {
+  prompt = `You are a professional document assistant. 
+
+Summarize the following document clearly and concisely.
+- Use short paragraphs or clean bullet points
+- Focus on the key points only
+- Do not use markdown symbols like ** or #
+- Write in plain, natural language
+
+Document:
+${truncatedText}`;
+} else if (type === "question") {
+  if (!question) {
+    return NextResponse.json(
+      { error: "Question is required" },
+      { status: 400 }
+    );
+  }
+
+  prompt = `You are a professional document assistant.
+
+Answer the user's question based only on the document below.
+- Be clear and direct
+- If the answer is not in the document, say "I couldn't find that information in the document."
+- Do not use markdown symbols like ** or #
+- Write in plain, natural language
+
+Document:
+${truncatedText}
+
+Question: ${question}`;
+} else {
+  return NextResponse.json(
+    { error: "Invalid type. Use 'summarize' or 'question'" },
+    { status: 400 }
+  );
+}
 
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile", // good quality. For higher limits use "llama-3.1-8b-instant"
