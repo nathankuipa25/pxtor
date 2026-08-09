@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -315,16 +316,16 @@ export default function Home() {
             )}
 
             {/* AI Answer */}
-            {aiAnswer && (
-              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
-                <h3 className="text-sm font-semibold text-indigo-900 mb-2">
-                  AI Response
-                </h3>
-                <p className="text-sm text-indigo-900 leading-relaxed whitespace-pre-wrap">
-                  {aiAnswer}
-                </p>
-              </div>
-            )}
+{aiAnswer && (
+  <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
+    <h3 className="text-sm font-semibold text-indigo-900 mb-2">
+      AI Response
+    </h3>
+    <div className="prose prose-sm prose-indigo max-w-none text-indigo-900">
+      <ReactMarkdown>{aiAnswer}</ReactMarkdown>
+    </div>
+  </div>
+)}
 
             {/* Extracted Text */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -354,9 +355,13 @@ export default function Home() {
         )}
       </div>
 
-      <footer className="text-center text-xs text-gray-400 py-8">
-        Built with Next.js + Tailwind + Groq
-      </footer>
+      <footer className="border-t border-gray-200 bg-white mt-10">
+  <div className="max-w-lg mx-auto px-4 py-6 text-center">
+    <p className="text-sm text-gray-500">
+      © {new Date().getFullYear()} Nattix Technologies
+    </p>
+  </div>
+</footer>
     </main>
   );
 }
